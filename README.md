@@ -194,8 +194,3 @@ The configuration template is fully defined in [infrastructure/cloudformation.ym
 }
 ```
 
----
-
-## License
-
-This project is licensed under the MIT License.
