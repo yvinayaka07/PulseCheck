@@ -6,6 +6,8 @@ PulseCheck is a production-grade, highly-optimized health-monitoring microservic
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.111-green?logo=fastapi)](https://fastapi.tiangolo.com/)
 [![Docker](https://img.shields.io/badge/Docker-multi--stage-blue?logo=docker)](https://www.docker.com/)
 
+![PulseCheck Observability Dashboard](assets/dashboard.png)
+
 ---
 
 ## Features
@@ -87,6 +89,8 @@ pulsecheck/
 ---
 
 ## Local Pipeline Simulator
+
+![Local CI/CD Pipeline Simulator](assets/pipeline.png)
 
 You can simulate the entire CI/CD pipeline (Linting $\rightarrow$ Pytest Suite $\rightarrow$ Code Coverage reporting $\rightarrow$ Docker Multi-Stage Compilation $\rightarrow$ Background containerized smoke tests) in a single command.
 
