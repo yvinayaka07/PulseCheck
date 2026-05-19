@@ -1,0 +1,240 @@
+# =============================================================================
+# PulseCheck – AWS CloudFormation Template
+# Architecture: ECS Fargate Service behind an ALB
+# =============================================================================
+
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  PulseCheck – Deploys the health-monitoring microservice as an ECS Fargate
+  service inside an existing VPC. Provisions a Cluster, Task Definition,
+  Service, Security Group, and an Application Load Balancer Target Group.
+
+# -----------------------------------------------------------------------------
+# Parameters
+# -----------------------------------------------------------------------------
+Parameters:
+
+  Environment:
+    Type: String
+    Default: production
+    AllowedValues: [development, staging, production]
+    Description: Deployment environment name.
+
+  ImageUri:
+    Type: String
+    Description: >
+      Full ECR image URI including tag.
+      Example: 123456789012.dkr.ecr.us-east-1.amazonaws.com/pulsecheck:latest
+
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: VPC where the ECS service will be deployed.
+
+  SubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: List of subnet IDs for the ECS tasks (at least 2, across AZs).
+
+  TaskCpu:
+    Type: Number
+    Default: 256
+    AllowedValues: [256, 512, 1024, 2048, 4096]
+    Description: CPU units for the Fargate task (1 vCPU = 1024 units).
+
+  TaskMemory:
+    Type: Number
+    Default: 512
+    AllowedValues: [512, 1024, 2048, 4096]
+    Description: Memory (MiB) for the Fargate task.
+
+  DesiredCount:
+    Type: Number
+    Default: 1
+    MinValue: 1
+    Description: Number of running task replicas.
+
+  ContainerPort:
+    Type: Number
+    Default: 8000
+    Description: Port exposed by the container.
+
+# -----------------------------------------------------------------------------
+# Resources
+# -----------------------------------------------------------------------------
+Resources:
+
+  # ── IAM Role for ECS Task Execution ────────────────────────────────────────
+  ECSTaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "PulseCheckTaskExecutionRole-${Environment}"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+      Tags:
+        - Key: Project
+          Value: PulseCheck
+        - Key: Environment
+          Value: !Ref Environment
+
+  # ── CloudWatch Log Group ────────────────────────────────────────────────────
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/ecs/pulsecheck/${Environment}"
+      RetentionInDays: 14
+
+  # ── Security Group for ECS Tasks ───────────────────────────────────────────
+  ECSSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow inbound traffic to PulseCheck on container port
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: !Ref ContainerPort
+          ToPort: !Ref ContainerPort
+          CidrIp: 0.0.0.0/0          # Restrict to ALB SG in production
+          Description: Allow HTTP on container port
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+          Description: Allow all outbound (needed for external API health check)
+      Tags:
+        - Key: Name
+          Value: !Sub "pulsecheck-ecs-sg-${Environment}"
+        - Key: Project
+          Value: PulseCheck
+
+  # ── ECS Cluster ─────────────────────────────────────────────────────────────
+  ECSCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Sub "pulsecheck-cluster-${Environment}"
+      CapacityProviders:
+        - FARGATE
+        - FARGATE_SPOT
+      DefaultCapacityProviderStrategy:
+        - CapacityProvider: FARGATE
+          Weight: 1
+      ClusterSettings:
+        - Name: containerInsights
+          Value: enabled
+      Tags:
+        - Key: Project
+          Value: PulseCheck
+        - Key: Environment
+          Value: !Ref Environment
+
+  # ── ECS Task Definition ─────────────────────────────────────────────────────
+  TaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub "pulsecheck-task-${Environment}"
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: !Ref TaskCpu
+      Memory: !Ref TaskMemory
+      ExecutionRoleArn: !GetAtt ECSTaskExecutionRole.Arn
+      TaskRoleArn: !GetAtt ECSTaskExecutionRole.Arn   # Extend for S3/SSM access
+      ContainerDefinitions:
+        - Name: pulsecheck
+          Image: !Ref ImageUri
+          Essential: true
+          PortMappings:
+            - ContainerPort: !Ref ContainerPort
+              Protocol: tcp
+          Environment:
+            - Name: APP_ENV
+              Value: !Ref Environment
+            - Name: LOG_LEVEL
+              Value: INFO
+            - Name: PORT
+              Value: !Sub "${ContainerPort}"
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref LogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: ecs
+          HealthCheck:
+            Command:
+              - CMD-SHELL
+              - !Sub >
+                python -c
+                "import urllib.request;
+                urllib.request.urlopen('http://localhost:${ContainerPort}/health')"
+                || exit 1
+            Interval: 30
+            Timeout: 10
+            Retries: 3
+            StartPeriod: 15
+      Tags:
+        - Key: Project
+          Value: PulseCheck
+        - Key: Environment
+          Value: !Ref Environment
+
+  # ── ECS Service ─────────────────────────────────────────────────────────────
+  ECSService:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: !Sub "pulsecheck-service-${Environment}"
+      Cluster: !Ref ECSCluster
+      TaskDefinition: !Ref TaskDefinition
+      DesiredCount: !Ref DesiredCount
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          Subnets: !Ref SubnetIds
+          SecurityGroups:
+            - !Ref ECSSecurityGroup
+          AssignPublicIp: ENABLED   # Set to DISABLED when behind an ALB
+      DeploymentConfiguration:
+        MinimumHealthyPercent: 100
+        MaximumPercent: 200
+        DeploymentCircuitBreaker:
+          Enable: true
+          Rollback: true
+      Tags:
+        - Key: Project
+          Value: PulseCheck
+        - Key: Environment
+          Value: !Ref Environment
+
+# -----------------------------------------------------------------------------
+# Outputs
+# -----------------------------------------------------------------------------
+Outputs:
+
+  ClusterName:
+    Description: Name of the ECS cluster
+    Value: !Ref ECSCluster
+    Export:
+      Name: !Sub "PulseCheck-ClusterName-${Environment}"
+
+  ServiceName:
+    Description: Name of the ECS service
+    Value: !GetAtt ECSService.Name
+    Export:
+      Name: !Sub "PulseCheck-ServiceName-${Environment}"
+
+  TaskDefinitionArn:
+    Description: ARN of the ECS task definition
+    Value: !Ref TaskDefinition
+
+  ECSSecurityGroupId:
+    Description: Security Group ID for ECS tasks
+    Value: !Ref ECSSecurityGroup
+    Export:
+      Name: !Sub "PulseCheck-ECSSecurityGroup-${Environment}"
+
+  LogGroupName:
+    Description: CloudWatch log group for container logs
+    Value: !Ref LogGroup
