@@ -86,6 +86,8 @@ pulsecheck/
    - **Raw JSON Health Endpoint**: [http://localhost:8000/health](http://localhost:8000/health)
    - **Swagger API Documentation**: [http://localhost:8000/docs](http://localhost:8000/docs)
 
+![PulseCheck Interactive Swagger Documentation](assets/docs.png)
+
 ---
 
 ## Local Pipeline Simulator
