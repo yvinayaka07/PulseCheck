@@ -92,8 +92,6 @@ pulsecheck/
 
 ## Local Pipeline Simulator
 
-![Local CI/CD Pipeline Simulator](assets/pipeline.png)
-
 You can simulate the entire CI/CD pipeline (Linting $\rightarrow$ Pytest Suite $\rightarrow$ Code Coverage reporting $\rightarrow$ Docker Multi-Stage Compilation $\rightarrow$ Background containerized smoke tests) in a single command.
 
 - **On Windows (PowerShell)**:
@@ -106,6 +104,41 @@ You can simulate the entire CI/CD pipeline (Linting $\rightarrow$ Pytest Suite $
   chmod +x run-pipeline.sh
   ./run-pipeline.sh
   ```
+
+### Example Simulation Output
+
+```text
+====================================================
+ 🩺 PulseCheck Local CI/CD Pipeline Simulator
+====================================================
+
+[1/3] Running automated unit and integration tests...
+============================= test session starts =============================
+platform win32 -- Python 3.13.2, pytest-9.0.3, pluggy-1.6.0
+rootdir: C:\Users\user\Desktop\pulsecheck
+plugins: anyio-4.13.0, cov-7.1.0
+collected 21 items
+
+tests\test_health.py .....................                               [100%]
+
+=============================== tests coverage ================================
+Name            Stmts   Miss  Cover   Missing
+---------------------------------------------
+app\health.py     104     34    67%   49, 75-85, 94-96, 105-107, 116-118, 143-151, 158-179
+app\main.py        35      4    89%   51, 59, 602, 643
+---------------------------------------------
+TOTAL             139     38    73%
+======================= 21 passed, 5 warnings in 1.88s ========================
+✅ All tests passed successfully!
+
+Checking local containerization environment...
+⚠️  Docker is not installed or not in system PATH.
+Skipping containerization steps. Install Docker to test multi-stage builds locally.
+
+====================================================
+ 🎉 Local Pipeline Passed (Tests Only - Docker Skipped)
+====================================================
+```
 
 ---
 
