@@ -1,6 +1,6 @@
 # PulseCheck 🩺
 
-> A production-grade, highly-optimized health-monitoring microservice and real-time observability dashboard built with **FastAPI**, **Docker**, and **AWS ECS Fargate**. Designed as a high-fidelity showcase for DevOps screening.
+PulseCheck is a production-grade, highly-optimized health-monitoring microservice and real-time observability dashboard built with **FastAPI**, **Docker**, and **AWS ECS Fargate**. It acts as a lightweight daemon that tracks system health parameters and external API dependencies.
 
 [![Python](https://img.shields.io/badge/Python-3.11-blue?logo=python)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.111-green?logo=fastapi)](https://fastapi.tiangolo.com/)
@@ -8,128 +8,140 @@
 
 ---
 
-## ⚡ 60-Second Quick Evaluation Guide (For the Hiring Team)
-To make your evaluation as seamless as possible, here is how you can review and run this entire project in under a minute:
+## Features
 
-### 1. Run the Local CI/CD Pipeline Simulator (Tests + Build + Coverage)
-This script runs the unit tests, prints a code coverage table, checks Docker, builds the image, runs a background container, and tests it.
-* **On Windows (PowerShell)**:
-  ```powershell
-  Set-ExecutionPolicy Bypass -Scope Process
-  .\run-pipeline.ps1
-  ```
-* **On macOS/Linux (Bash)**:
-  ```bash
-  chmod +x run-pipeline.sh
-  ./run-pipeline.sh
-  ```
-
-### 2. Launch the Application Locally
-Run this single command to start the FastAPI server with hot-reloading:
-```powershell
-.venv\Scripts\uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-```
-*(If on macOS/Linux, run `.venv/bin/uvicorn app.main:app --reload`)*
-
-### 3. Open the Observing Features
-Once the server is running, open your web browser to check:
-* 🩺 **Live Observability Dashboard**: [http://localhost:8000/](http://localhost:8000/)  
-  *(A gorgeous real-time glassmorphic UI tracking CPU/Memory/Disk and API status with active terminal logs!)*
-* 📄 **Interactive API Docs (Swagger)**: [http://localhost:8000/docs](http://localhost:8000/docs)
-* 📊 **Raw JSON Health Endpoint**: [http://localhost:8000/health](http://localhost:8000/health)
+- **System Diagnostics**: Gathers real-time CPU, Virtual Memory, and Root Disk usage.
+- **External Dependency Probing**: Health-checks connectivity to the GitHub API (`api.github.com`) using a robust HTTP session with exponential retries and backoff.
+- **Content Negotiation**: Returns a responsive, glassmorphic live observability dashboard (`text/html`) to browser clients, while serving standard JSON payloads (`application/json`) to automated tools and API clients.
+- **Event Log Streaming**: Streams service execution events inside a clean logs emulator widget directly on the dashboard.
+- **Production Containerization**: Multi-stage Docker build separating compile-time dependencies from the final minimal runtime image, executing under a secure non-root user.
 
 ---
 
-## 🌟 Screening Rubric Mapping
-Here is how the project addresses every requirement in the screening prompt:
-
-| Requirement Phase | Feature Implemented | Codebase Location |
-|---|---|---|
-| **Phase 1: Application** | Lightweight **FastAPI** service capturing live system resource usage (`psutil`) and GitHub API connectivity with automated retries. | [app/health.py](file:///c:/Users/user/Desktop/pulsecheck/app/health.py) |
-| **Phase 1: Containerization** | **Multi-stage, production-ready Dockerfile** separating dependencies from the final minimal runtime image. Runs under a secure **non-root user**. | [Dockerfile](file:///c:/Users/user/Desktop/pulsecheck/Dockerfile) |
-| **Phase 2: CI/CD Pipeline** | Fully defined **GitHub Actions CI/CD pipeline** running automated unit tests with coverage, building Docker image, and executing a containerized smoke-test. | [.github/workflows/ci.yml](file:///c:/Users/user/Desktop/pulsecheck/.github/workflows/ci.yml) |
-| **Phase 3: IaC** | **AWS CloudFormation template** provisioning the Serverless compute infrastructure: ECS Fargate, Task Definitions, CloudWatch logging, VPC Security Groups, and IAM roles. | [infrastructure/cloudformation.yml](file:///c:/Users/user/Desktop/pulsecheck/infrastructure/cloudformation.yml) |
-| **Option B: Local Showcase** | Dedicated shell scripts (`.sh` & `.ps1`) simulating the entire pipeline locally, reporting test results and Docker builds. | [run-pipeline.ps1](file:///c:/Users/user/Desktop/pulsecheck/run-pipeline.ps1) & [run-pipeline.sh](file:///c:/Users/user/Desktop/pulsecheck/run-pipeline.sh) |
-| **Going the Extra Mile 🚀** | **Content-negotiated frontend Dashboard**: Returns a gorgeous observational dashboard to browsers (`text/html`), but maintains raw JSON status response to CLI tools (`application/json`). | [app/main.py](file:///c:/Users/user/Desktop/pulsecheck/app/main.py) |
-
----
-
-## 📁 Flat & Clean Repository Directory
-The internal codebase has been aggressively flattened to eliminate redundant boilerplate files (like `config.py` or package files) to make it highly readable and clean:
+## Directory Structure
 
 ```
 pulsecheck/
 │
 ├── app/
-│   ├── main.py              # FastAPI app, content-negotiated dashboard, entrypoint
-│   ├── health.py            # Metrics logic, retry HTTP session, Settings & Logger
-│   └── requirements.txt     # Python dependencies
+│   ├── main.py              # FastAPI application, routing, and settings
+│   ├── health.py            # Diagnostic collectors, retry sessions, logging configuration
+│   └── requirements.txt     # Python application requirements
 │
 ├── tests/
-│   └── test_health.py       # pytest test suite (21 assertions)
+│   └── test_health.py       # pytest test suite covering all endpoints
 │
 ├── .github/
 │   └── workflows/
-│       └── ci.yml           # GitHub Actions CI/CD automation pipeline
+│       └── ci.yml           # GitHub Actions CI/CD pipeline definition
 │
 ├── infrastructure/
-│   └── cloudformation.yml   # AWS CloudFormation IaC (ECS Fargate Serverless)
+│   └── cloudformation.yml   # AWS CloudFormation IaC for Serverless ECS Fargate
 │
-├── Dockerfile               # Production multi-stage container
-├── docker-compose.yml       # Local container orchestrator
-├── run-pipeline.ps1         # Windows PowerShell Local Pipeline Simulator
-├── run-pipeline.sh          # UNIX/Linux Local Pipeline Simulator
-└── README.md                # Evaluator Quick-Start & Spec documentation
+├── Dockerfile               # Multi-stage Docker configuration
+├── docker-compose.yml       # Local multi-container orchestration configuration
+├── run-pipeline.ps1         # Local CI/CD pipeline simulator for Windows PowerShell
+├── run-pipeline.sh          # Local CI/CD pipeline simulator for macOS/Linux Bash
+└── README.md                # Technical documentation
 ```
 
 ---
 
-## 🛠️ Deep Dive: Local Pipeline Simulator
-The simulator executes three critical CI/CD stages locally:
-1. **Unit & Integration Tests**: Runs pytest and prints a complete coverage matrix showing which lines are tested.
-2. **Multi-Stage Docker Build**: Compiles the secure production-grade container image.
-3. **Background Smoke Test**: Launches the built container in the background, waits for boot, probes the `/health` endpoint to verify a `200 OK` JSON response, outputs the payload, and safely stops and removes the container.
+## Getting Started
+
+### Prerequisites
+
+- Python 3.11+
+- Docker Desktop (optional, for containerization tasks)
+
+### Local Development Setup
+
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/yvinayaka07/PulseCheck.git
+   cd PulseCheck
+   ```
+
+2. **Initialize a virtual environment**:
+   ```bash
+   python -m venv .venv
+   source .venv/bin/activate        # Windows: .venv\Scripts\activate
+   ```
+
+3. **Install application dependencies**:
+   ```bash
+   pip install -r app/requirements.txt
+   pip install pytest pytest-cov httpx
+   ```
+
+4. **Launch the FastAPI application**:
+   ```bash
+   uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+   ```
+
+5. **Access the application endpoints**:
+   - **Observability Dashboard**: [http://localhost:8000/](http://localhost:8000/) (Open in any web browser)
+   - **Raw JSON Health Endpoint**: [http://localhost:8000/health](http://localhost:8000/health)
+   - **Swagger API Documentation**: [http://localhost:8000/docs](http://localhost:8000/docs)
 
 ---
 
-## 📦 Local Container Commands
+## Local Pipeline Simulator
 
-### Build the Image Manually
+You can simulate the entire CI/CD pipeline (Linting $\rightarrow$ Pytest Suite $\rightarrow$ Code Coverage reporting $\rightarrow$ Docker Multi-Stage Compilation $\rightarrow$ Background containerized smoke tests) in a single command.
+
+- **On Windows (PowerShell)**:
+  ```powershell
+  Set-ExecutionPolicy Bypass -Scope Process
+  .\run-pipeline.ps1
+  ```
+- **On macOS/Linux (Bash)**:
+  ```bash
+  chmod +x run-pipeline.sh
+  ./run-pipeline.sh
+  ```
+
+---
+
+## Containerization & Deployment
+
+### Run using Docker Compose
+```bash
+docker compose up --build
+```
+
+### Manual Docker Build
 ```bash
 docker build -t pulsecheck:latest .
 ```
 
-### Run via Docker Compose
-```bash
-docker compose up --build
-```
-The application will map port `8000` to your host machine automatically.
-
 ---
 
-## 🧪 Testing Suite Spec
-Our automated testing suite covers:
-- Service root identity & Content Negotiation checks.
-- System metrics validation (CPU, Memory, Disk boundaries).
-- Mocking external API responses (unreachable, timeout, HTTP 403, and retry-handling).
+## Automated Test Suite
 
-To run the tests manually:
+The test suite performs comprehensive diagnostics testing, including endpoint response schemas, metric boundaries, and mocking external connectivity errors (connection failure, timeouts, HTTP 403) to verify the automatic retry sessions.
+
+### Run tests manually
 ```bash
 python -m pytest tests/ --cov=app -v
 ```
 
 ---
 
-## ☁️ AWS Cloud Computing Choice (ECS Fargate)
-For a lightweight microservice, **AWS ECS Fargate (Serverless CaaS)** represents the most optimized compute tier:
-- **No Server Management**: No virtual servers (EC2) or Kubernetes nodes (EKS) to manage, patch, or pay for while idle.
-- **Granular Billing**: Billed strictly per-second based on the exact allocated CPU and memory (set to `0.25 vCPU` and `0.5 GB RAM` in the CloudFormation template).
-- **Inherent Security**: Run inside private subnets in your custom VPC with strict Security Groups.
+## Infrastructure as Code (AWS ECS Fargate)
+
+PulseCheck uses a Serverless CaaS model (**AWS ECS Fargate**) for compute resources, which provides zero idle-resource costs and eliminates host OS patching overhead. 
+
+The configuration template is fully defined in [infrastructure/cloudformation.yml](file:///c:/Users/user/Desktop/pulsecheck/infrastructure/cloudformation.yml) and provisions:
+- **ECS Fargate Cluster** & ECS Task Definition (`0.25 vCPU`, `0.5 GB RAM`)
+- **ECS Service** with network mappings
+- **AWS CloudWatch Log Group** for centralized logging
+- Tight-scope **IAM Execution Roles**
 
 ---
 
-## 📝 Example Health JSON Payload
-Querying `/health` returns the following payload:
+## Example Health Response (`GET /health`)
+
 ```json
 {
   "status": "healthy",
@@ -144,4 +156,5 @@ Querying `/health` returns the following payload:
 ---
 
 ## License
-MIT © 2026 PulseCheck Contributors. All rights reserved.
+
+This project is licensed under the MIT License.
