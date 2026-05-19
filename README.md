@@ -74,8 +74,8 @@ pulsecheck/
 
 ### 1. Clone & Install
 ```bash
-git clone https://github.com/your-username/pulsecheck.git
-cd pulsecheck
+git clone https://github.com/yvinayaka07/PulseCheck.git
+cd PulseCheck
 
 # Create a virtual environment
 python -m venv .venv
