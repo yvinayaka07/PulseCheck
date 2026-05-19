@@ -30,7 +30,7 @@ class Settings:
     PORT: int = int(os.getenv("PORT", "8000"))
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
     EXTERNAL_CHECK_URL: str = os.getenv(
-        "EXTERNAL_CHECK_URL", "https://api.github.com"
+        "EXTERNAL_CHECK_URL", "https://www.github.com"
     )
     EXTERNAL_CHECK_TIMEOUT: int = int(os.getenv("EXTERNAL_CHECK_TIMEOUT", "5"))
     EXTERNAL_CHECK_RETRIES: int = int(os.getenv("EXTERNAL_CHECK_RETRIES", "3"))
