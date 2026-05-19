@@ -148,6 +148,8 @@ The configuration template is fully defined in [infrastructure/cloudformation.ym
 
 ## Example Health Response (`GET /health`)
 
+![PulseCheck /health JSON Response](assets/response.png)
+
 ```json
 {
   "status": "healthy",
