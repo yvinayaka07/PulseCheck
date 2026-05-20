@@ -16,6 +16,11 @@ PulseCheck's end-to-end architecture is built for high reliability, automated lo
 
 Below is the **Complete End-to-End Project Architecture Diagram**, illustrating the entire system lifecycle—from local development and CI/CD pipelines to containerization, AWS ECS Fargate serverless hosting, internal FastAPI application runtime, system metrics collection, and external probing:
 
+![PulseCheck End-to-End Project Architecture](assets/architecture.png)
+
+<details>
+<summary><b>🔍 View Editable Mermaid Diagram Source</b></summary>
+
 ```mermaid
 graph TB
     %% Styling classes
@@ -99,6 +104,8 @@ graph TB
     Engine -->|psutil queries| HostOS
     Engine -->|requests HTTP GET| GitAPI
 ```
+
+</details>
 
 ### Architectural Breakdown
 
