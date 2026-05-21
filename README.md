@@ -165,8 +165,11 @@ pulsecheck/
 │
 ├── Dockerfile               # Multi-stage Docker configuration
 ├── docker-compose.yml       # Local multi-container orchestration configuration
+├── deploy-aws.ps1           # AWS ECS Fargate automated deployment for Windows PowerShell
+├── deploy-aws.sh            # AWS ECS Fargate automated deployment for macOS/Linux Bash
 ├── run-pipeline.ps1         # Local CI/CD pipeline simulator for Windows PowerShell
 ├── run-pipeline.sh          # Local CI/CD pipeline simulator for macOS/Linux Bash
+├── pytest.ini               # pytest configurations and PYTHONPATH binding
 └── README.md                # Technical documentation
 ```
 
