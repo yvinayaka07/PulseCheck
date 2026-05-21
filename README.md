@@ -10,6 +10,15 @@ PulseCheck is a production-grade, highly-optimized health-monitoring microservic
 
 ---
 
+## 🌐 Live AWS Production Deployment
+
+PulseCheck is actively running in production behind a highly available Application Load Balancer (ALB) on AWS ECS Fargate:
+
+* **Observability Dashboard:** [http://pulsecheck-alb-112188478.ap-south-1.elb.amazonaws.com](http://pulsecheck-alb-112188478.ap-south-1.elb.amazonaws.com)
+* **JSON Health Diagnostics:** [http://pulsecheck-alb-112188478.ap-south-1.elb.amazonaws.com/health](http://pulsecheck-alb-112188478.ap-south-1.elb.amazonaws.com/health)
+
+---
+
 ## System Architecture
 
 PulseCheck's end-to-end architecture is built for high reliability, automated local/remote verification, and resilient cloud hosting. 
